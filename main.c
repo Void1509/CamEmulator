@@ -95,42 +95,21 @@ static unsigned long get_tstamp() {
 }
 // service functions ------------------------------------------------------------------------------
 static char read_bytes(int fd, short cnd, void *p) {
-//	puts("Read bytes");
 	struct ReadBuf_s *rb = p;
 	size_t rbytes;
 	char ret = 1;
 
-//	rbytes = read(fd, &rb->buf[rb->inx], (size_t)(RBUF_MAX - rb->inx));
 	rbytes = read(fd, &rb->buf[rb->inx], 1);
 	if (rbytes >= 0) {
 		rb->inx += rbytes;
 
 		if (rb->inx >= RBUF_MAX) rb->inx = 0;
-
-//		hex_dump(rb->buf, rb->inx, 32);
-//		protType.parse_buf_func(rb);
-	}
-	if (rbytes > 0)
-		ret = 1;
-
-	if (rbytes == 0)
-		ret = 0;
-
-	if (rbytes < 0)
+		ret = rbytes;
+	} else {
 		ret = -1;
-
+	}
 	return ret;
 }
-/*
-static gboolean app_activate(struct CmdLine_s *cmd) {
-	g_io_add_watch(ttyFd, G_IO_IN | G_IO_PRI | G_IO_HUP, read_bytes, &rBuf);
-	g_timeout_add(1000, timer_func, NULL);
-	if (!appConfig.visca) {
-		test_conn(ttyFd);
-	}
-	return TRUE;
-}
-*/
 static void usage(char *prg) {
 	printf("Usage: %s [-d /dev/ttyUSB0] [-b 115200] [-v] [-c]\n"
 			"  -d <device name>\n  -b <baudrate>\n  -s - Single command" 	
@@ -185,11 +164,17 @@ char parse_cmdline(int argc, char **argv) {
 	return ret;
 }
 
+/*
 int main(int argc, char *argv[]) {
 	if (!parse_cmdline(argc, argv))
 		return -1;
 
-//	struct CmdLine_s cmdLine = {.argc = argc, .argv = argv};
+}
+*/
+
+int main(int argc, char *argv[]) {
+	if (!parse_cmdline(argc, argv))
+		return -1;
 
 	static unsigned long tstamp, timer1 = 0, tlim1 = 1000;
 	puts(appConfig.drvName);

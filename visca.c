@@ -17,6 +17,7 @@ static const uint8_t inqGetCamModel[] = {3, 0x09, 0, 0x37};
 static const uint8_t inqGetCamVersion[] = {3, 0x09, 0, 2};
 static const uint8_t inqGetCamZoom[] = {3, 0x09, 4, 0x47};
 static const uint8_t inqGetCamFocus[] = {3, 0x09, 4, 0x48};
+static const uint8_t setCamRes[] = {6, 1, 4, 0x24, 0x72, 0, 8};
 static const uint8_t cmdCamZoomTele[] = {4, 01, 04, 07, 02};
 static const uint8_t cmdCamZoomWide[] = {4, 01, 04, 07, 03};
 
@@ -30,6 +31,7 @@ static void (*getAnswer_func)(uint8_t *bf, uint8_t len) = NULL;
 
 void ansGetCamZoom(uint8_t *bf, uint8_t len);
 void ansGetCamFocus(uint8_t *bf, uint8_t len);
+void ansSetCamRes(uint8_t *bf, uint8_t len);
 
 static void getPowerOnAns(uint8_t *bf, uint8_t len, int ch);
 static void getCamIDAns(uint8_t *bf, uint8_t len, int ch);
@@ -168,6 +170,11 @@ static void getCamFocusAns(uint8_t *bf, uint8_t len, int ch) {
 	fsync(ch);
 //	printf("Send CamFocus:");
 //	hex_dump(wbuf, 7, 16);
+}
+
+void ansSetCamRes(uint8_t *bf, uint8_t len) {
+	printf("Answer setCamRes:");
+	hex_dump(bf, len, 16);
 }
 
 char visca_buf(struct ReadBuf_s *rb) {
@@ -348,6 +355,20 @@ static void send_inqGetCamFocus(int ch) {
 	free(wbuf);
 }
 
+static void send_setCamRes(int ch) {
+	uint8_t *wbuf = build_packet(setCamRes, 0);
+	size_t wb;
+
+	wb = write(ch, wbuf, (size_t)(setCamRes[0]+2));
+	if (wb >= 0) {
+		fsync(ch);
+		printf("Send buffer:");
+		hex_dump(wbuf, setCamRes[0] + 2, 16);
+		getAnswer_func = ansSetCamRes;
+	}
+	free(wbuf);
+}
+
 void ansGetCamFocus(uint8_t *bf, uint8_t len) {
 
 		uint16_t pqrs = 0;
@@ -391,6 +412,9 @@ void visca_cmd(int ch, uint8_t cmd) {
 			break;
 		case 9:
 			send_inqGetCamFocus(ch);
+			break;
+		case 10:
+			send_setCamRes(ch);
 			break;
 	}
 	//	send_brcAdrSet(ch);
